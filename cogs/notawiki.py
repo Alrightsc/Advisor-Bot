@@ -238,7 +238,8 @@ class Notawiki(commands.Cog):
             description = "**.challenge <faction>**\n**Aliases: **" + ', '.join(alias["challenge"]) + "\n\nRetrieves " \
                         "challenge info from Not-a-Wiki displaying name, requirements, effects, and formulas. Valid " \
                         "inputs include using faction name and the challenge number, or r for spell challenge " \
-                        "reward.\n\nExample: Fairy 2, Makers r"
+                        "reward. Mercenary templates in place of full name can be used, adding C# or \"R\".\n\nExample: " \
+                        "Fairy 2, Makers r, DGC5, DJR"
             embed = discord.Embed(title=f"{emoji}  Challenge", description=description, colour=discord.Colour.dark_gold())
             return await ctx.send(embed=embed)
 
