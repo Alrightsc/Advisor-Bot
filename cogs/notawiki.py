@@ -167,17 +167,6 @@ class Notawiki(commands.Cog):
         global color
         global faction
 
-        # basic Help command
-        if (arg is None and number is None) or (arg == "help" and number is None):
-            emoji = discord.utils.get(ctx.guild.emojis, name="SuggestionMaster")
-            description = "**.upgrade <faction>**\n**Aliases: **" + ', '.join(alias["upgrade"]) + \
-                          "\n\nRetrieves a Faction upgrade information " \
-                          "directly from Not-a-Wiki. <faction> inputs can be using two-letter Mercenary Template with " \
-                          "upgrade number, or full Faction name with an upgrade number.\n\nExamples: Fairy 7, MK10 "
-            embed = discord.Embed(title=f"{emoji}  Upgrade", description=description,
-                                  colour=discord.Colour.dark_gold())
-            return await ctx.send(embed=embed)
-
         # Checking if input returns an abbreviation faction i.e. FR7 or MK11, also accepts lowercase inputs
         if arg[2].isdigit() and number is None:
             faction = arg.upper()
@@ -187,7 +176,7 @@ class Notawiki(commands.Cog):
         # if number is added as an input, we automatically assume the full term, i.e. "Fairy 7"
         elif number is not None:
             # Some people just like to watch the world burn
-            if int(number) < 0 or int(number) > 12:
+            if int(number) < 1 or int(number) > 12:
                 raise Exception('Invalid Input')
 
             arg2 = arg.lower()
@@ -232,17 +221,6 @@ class Notawiki(commands.Cog):
         global color
         global faction
 
-        # Help panel in case of no input
-        if (arg is None and number is None) or (arg == "help" and number is None):
-            emoji = discord.utils.get(ctx.guild.emojis, name="SuggestionMaster")
-            description = "**.challenge <faction>**\n**Aliases: **" + ', '.join(alias["challenge"]) + "\n\nRetrieves " \
-                        "challenge info from Not-a-Wiki displaying name, requirements, effects, and formulas. Valid " \
-                        "inputs include using faction name and the challenge number, or r for spell challenge " \
-                        "reward. Mercenary templates in place of full name can be used, adding C# or \"R\".\n\nExample: " \
-                        "Fairy 2, Makers r, DGC5, DJR"
-            embed = discord.Embed(title=f"{emoji}  Challenge", description=description, colour=discord.Colour.dark_gold())
-            return await ctx.send(embed=embed)
-
         # Checking if input returns an abbreviation faction i.e. FR2 or MK5, also accepts lowercase inputs
         if arg[2].isdigit() or arg[2] in ["R", "r", "C", "c"] and number is None:
             if arg[2] in ["C", "c"]:
@@ -252,7 +230,6 @@ class Notawiki(commands.Cog):
             color = FactionUpgrades.getFactionColour(argColor)
             # No huge dictionary this time around
             faction2 = FactionUpgrades.getFactionNameFull(argColor)
-
             faction = faction2 + faction[0] + "C" + faction[2:]
 
         # if number is added as an input, we automatically assume the full term, i.e. "Fairy 7"
@@ -274,8 +251,6 @@ class Notawiki(commands.Cog):
             raise Exception('Invalid Input')
 
         async with ctx.channel.typing():
-            # We get our list through Not-a-Wiki Beautiful Soup search
-            # factionChallengeSearch takes parameters like "FairyFC1" or "FacelessFC1" (note the similar last 3 characters)
             data = factionChallengeSearch(faction)
 
             ignore = 4
@@ -305,15 +280,6 @@ class Notawiki(commands.Cog):
     async def research(self, ctx, researchName=None):
         """Retrieves Research upgrade from Not-a-Wiki"""
         global image
-
-        # Help command
-        if researchName is None or researchName == "help":
-            description = "**.research <research>**\n**Aliases: **" + ', '.join(alias["research"]) + "\n\nRetrieves the " \
-                    "Research info from Not-a-Wiki in an embed displaying name, cost, formula, and effect." \
-                    "\n\nAcceptable inputs are only using research branch + number (i.e. S10, C340, E400)."
-            emoji = discord.utils.get(ctx.guild.emojis, name="SuggestionMaster")
-            embed = discord.Embed(title=f"{emoji}  Research", description=description, colour=discord.Colour.dark_green())
-            return await ctx.send(embed=embed)
 
         # Capitalizing researchName, adding check and importing the research dict
         researchName = researchName.upper()
@@ -349,6 +315,7 @@ class Notawiki(commands.Cog):
                 line = line.strip()
                 if line.endswith("</p>"):
                     line = line.replace("</p>", "")
+                    print(line)
                 newLine = line.split(": ")
                 embed.add_field(name=f'**{newLine[0]}**', value=newLine[1], inline=True)
 
@@ -361,6 +328,7 @@ class Notawiki(commands.Cog):
         if isinstance(error, Exception):
             title = " :exclamation:  Command Error!"
             description = "The parameters you used are not found in the list. Please try again."
+            print(error)
             embed = discord.Embed(title=title, description=description, colour=discord.Colour.red())
             return await ctx.send(embed=embed)
 
