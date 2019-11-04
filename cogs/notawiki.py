@@ -17,6 +17,7 @@ alias = {
     "research": ["r", "res"]
 }
 
+
 def format(lst: list, factionUpgrade=None):
     """Formats the list retrieved from BeautifulSoup"""
 
@@ -102,6 +103,7 @@ def factionUpgradeSearch(faction):
     # Then we run the list through a formatter, and that becomes our new list
     return format(screen, factionUpgrade)
 
+
 def factionChallengeSearch(faction):
     # Retrieving data using Request and converting to BeautifulSoup object
     nawLink = "http://musicfamily.org/realm/Challenges/"
@@ -133,7 +135,16 @@ def factionChallengeSearch(faction):
     challengeName = screen[0].split("> ")[1]
     return format(screen, challengeName)
 
+
 def researchSearch(res):
+    # hardcoding W3150 because it's the only research that has a problem with the parser, will actually properly fix later
+    if res == "W3150":
+        W3150 = ["W3150", "For All Factions", "Upheaval", "Requirement: 60000 Farms, Inns and Blacksmiths.",
+                 "Cost: 731.6 NoQig (7.316e182)",
+                 "Effect: Increases the production of all buildings based on their tier, giving the highest bonus to the lowest.",
+                 "Formula: (150 * (12 - T) ^ 2.15), where T is building tier."]
+        return W3150
+
     # Yummy soup stuff
     nawLink = "http://musicfamily.org/realm/Researchtree/"
     content = requests.get(nawLink)
@@ -147,7 +158,7 @@ def researchSearch(res):
         if tag['research'].startswith(res + " "):
             # Splitting into a list. We want it to look as below:
             # <shorthand>, <for Faction>, <research Name>, <Requirements (optional)>, <Cost>, <Effect>
-            temp = re.split('\ \-\ |Research\ Name:|<p>|\ <p>|<p>\ |\ <p> ' , tag['research'])
+            temp = re.split('\ \-\ |Research\ Name:|<p>|\ <p>|<p>\ |\ <p> ', tag['research'])
             break
 
     # Bad strings are bad
@@ -156,6 +167,7 @@ def researchSearch(res):
             temp.remove(line)
 
     return temp
+
 
 class Notawiki(commands.Cog):
     def __init__(self, bot):
@@ -288,7 +300,7 @@ class Notawiki(commands.Cog):
 
         # Checks if first letter is an alphabet and the input after 0th index are digits
         if researchName[0].isalpha() and researchName[1:].isdigit():
-            for key,value in rbranch.items():
+            for key, value in rbranch.items():
                 if key[0] == researchName[0]:
                     image = value
                     check = True
@@ -331,6 +343,7 @@ class Notawiki(commands.Cog):
             print(error)
             embed = discord.Embed(title=title, description=description, colour=discord.Colour.red())
             return await ctx.send(embed=embed)
+
 
 ####
 def setup(bot):
