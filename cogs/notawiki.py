@@ -223,7 +223,7 @@ class Notawiki(commands.Cog):
             for line in data[2:]:
                 newline = line.split(": ")
                 first = f'**{newline[0]}**'
-                embed.add_field(name=first, value=newline[1], inline=True)
+                embed.add_field(name=first, value=newline[1], inline=False)
 
         await ctx.send(embed=embed)
 
@@ -284,7 +284,7 @@ class Notawiki(commands.Cog):
             for line in data[ignore:]:
                 newline = line.split(": ")
                 first = f'**{newline[0]}**'
-                embed.add_field(name=first, value=newline[1], inline=True)
+                embed.add_field(name=first, value=newline[1], inline=False)
 
         await ctx.send(embed=embed)
 
@@ -327,9 +327,8 @@ class Notawiki(commands.Cog):
                 line = line.strip()
                 if line.endswith("</p>"):
                     line = line.replace("</p>", "")
-                    print(line)
                 newLine = line.split(": ")
-                embed.add_field(name=f'**{newLine[0]}**', value=newLine[1], inline=True)
+                embed.add_field(name=f'**{newLine[0]}**', value=newLine[1], inline=False)
 
         await ctx.send(embed=embed)
 
@@ -340,7 +339,6 @@ class Notawiki(commands.Cog):
         if isinstance(error, Exception):
             title = " :exclamation:  Command Error!"
             description = "The parameters you used are not found in the list. Please try again."
-            print(error)
             embed = discord.Embed(title=title, description=description, colour=discord.Colour.red())
             return await ctx.send(embed=embed)
 
