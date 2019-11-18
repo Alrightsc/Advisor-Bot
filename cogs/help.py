@@ -3,10 +3,10 @@ from discord.ext import commands
 import discord
 
 alias = {
-    "research": ["research", "res", "r"],
-    "upgrade": ["upgrade", "upg", "up", "u"]
+    "upgrade": ["upg", "up", "u", "upgrade"],
+    "challenge": ["ch", "c", "challenge"],
+    "research": ["r", "res", "research"]
 }
-
 
 class Help(commands.Cog):
     def __init__(self, bot):
@@ -23,7 +23,8 @@ class Help(commands.Cog):
                           "\n\n" \
                           "**help** - Default help; help <command> below also gets more info about that command" \
                           "\n**upgrade** (upg, up, u) - Retrieves info for a Faction-only upgrade" \
-                          "\n**research** (res, r) - Retrieves info for a Research upgrade"
+                          "\n**research** (res, r) - Retrieves info for a Research upgrade" \
+                          "\n**challenge** (ch, c) - Retrieves info for a faction Challenge"
             embed = discord.Embed(title=title, description=description, colour=discord.Colour.magenta())
             return await ctx.send(embed=embed)
 
@@ -32,7 +33,7 @@ class Help(commands.Cog):
                     "Research info from Not-a-Wiki in an embed displaying name, cost, formula, and effect." \
                     "\n\nAcceptable inputs are only using research branch + number (i.e. S10, C340, E400)."
             emoji = discord.utils.get(ctx.guild.emojis, name="SuggestionMaster")
-            embed = discord.Embed(title=f"{emoji}  Research", description=description, colour=discord.Colour.magneta())
+            embed = discord.Embed(title=f"{emoji}  Research", description=description, colour=discord.Colour.magenta())
             return await ctx.send(embed=embed)
 
         if cmd in alias["challenge"]:
@@ -43,7 +44,7 @@ class Help(commands.Cog):
                           "reward. Mercenary templates in place of full name can be used, adding C# or \"R\".\n\nExample: " \
                           "Fairy 2, Makers r, DGC5, DJR"
             embed = discord.Embed(title=f"{emoji}  Challenge", description=description,
-                                  colour=discord.Colour.magneta())
+                                  colour=discord.Colour.magenta())
             return await ctx.send(embed=embed)
 
         if cmd in alias["upgrade"]:
@@ -53,12 +54,8 @@ class Help(commands.Cog):
                           "directly from Not-a-Wiki. <faction> inputs can be using two-letter Mercenary Template with " \
                           "upgrade number, or full Faction name with an upgrade number.\n\nExamples: Fairy 7, MK10 "
             embed = discord.Embed(title=f"{emoji}  Upgrade", description=description,
-                                  colour=discord.Colour.magneta())
+                                  colour=discord.Colour.magenta())
             return await ctx.send(embed=embed)
-
-
-
-
 
 ####
 def setup(bot):
