@@ -117,7 +117,7 @@ def challenge(faction):
             temp = [re.sub("<p>|<b>|</b>|\n|\t", "", s) for s in temp]
             temp.insert(0, temp[1])
             temp.pop(2)
-            challengeEmbed = challengeEmbed + temp
+            challengeEmbed = temp
             find = True
 
     if not find:
@@ -125,7 +125,7 @@ def challenge(faction):
 
     # Then we run the list through a formatter, and that becomes our new list
     challengeName = challengeEmbed[0].split("> ")[1]
-    return format(challengeEmbed, challengeName)
+    return Embedformat(challengeEmbed, challengeName)
 
 
 def research(research):
