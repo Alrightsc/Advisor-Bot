@@ -1,173 +1,15 @@
 from discord.ext import commands
-from utils import FactionUpgrades
-from bs4 import BeautifulSoup
-from urlextract import URLExtract
+from utils import FactionUpgrades, NaWSearch
 
-import re
 import datetime
 import discord
-import requests
-
-badSubstrings = ["", "Cost", "Effect", "Formula", "Mercenary Template", "Requirement", "Gem Grinder and Dragon's "
-                                                                                       "Breath Formula", 'Formula: ']
 
 alias = {
     "upgrade": ["upg", "up", "u"],
     "challenge": ["ch", "c"],
-    "research": ["r", "res"]
+    "research": ["r", "res"],
+    "lineage": ["l", "line"]
 }
-
-
-def format(lst: list, factionUpgrade=None):
-    """Formats the list retrieved from BeautifulSoup"""
-
-    # First line always return an url - we want to get the URL only for the thumbnail
-    url = lst[0]
-    extractor = URLExtract()
-    newUrl = extractor.find_urls(url)
-    lst.remove(url)
-    lst.insert(0, newUrl[0])
-
-    # We add the faction upgrade name to the list so embed can refer to this
-    if factionUpgrade is not None:
-        lst.insert(1, factionUpgrade)
-
-    # For 10-12 upgrades, we want Cost to be first after Requirement, to look nice in Embed
-    if lst[3].startswith('Requirement'):
-        old = lst[3]
-        new = lst[4]
-        lst[3] = new
-        lst[4] = old
-
-    # Cleanup in case bad stuff goes through somehow
-    for line in lst[3:]:
-        if line in badSubstrings:
-            lst.remove(line)
-
-        # Notes are not really important for the embed
-        if line.startswith("Note") or line.startswith("Tip"):
-            lst.remove(line)
-
-    # A little extra for Djinn 8 - show current UTC time and odd/even day
-    if factionUpgrade == "Flashy Storm":
-        utc_dt = datetime.datetime.utcnow()
-        day = int(utc_dt.strftime("%d"))
-        dj8 = ""
-        if day % 2 == 0:
-            dj8 = ", Odd-tier Day"
-        elif day % 2 == 1:
-            dj8 = ", Even-tier Day"
-
-        lst.append(f'Current Time (UTC): {utc_dt.strftime("%H:%M")}' + dj8)
-
-    # A little less for the Druid Challenges reward - remove picture from lst
-    if factionUpgrade == "Primal Balance":
-        lst.pop(5)
-
-    return lst
-
-
-def factionUpgradeSearch(faction):
-    # Getting the Upgrade from FactionUpgrades
-    factionUpgrade = FactionUpgrades.getFactionUpgradeName(faction)
-
-    # Retrieving data using Request and converting to BeautifulSoup object
-    nawLink = "http://musicfamily.org/realm/FactionUpgrades/"
-    content = requests.get(nawLink)
-    soup = BeautifulSoup(content.content, 'html5lib')
-
-    # Searching tags starting with <p>, which upgrades' lines on NaW begin with
-    p = soup.find_all('p')
-
-    # Our upgrade info will be added here
-    screen = []
-
-    # Iterating through p, finding until upgrade matches
-    for tag in p:
-        # space is necessary because there is always one after image
-        if tag.get_text() == " " + factionUpgrade:
-            # if True, adds full line so we can retrieve the image through our formatting function
-            screen.append(str(tag))
-
-            # Since we return true, we search using find_all_next function, and then break it there since we don't
-            # need to iterate anymore at the end
-            for line in tag.find_all_next(['p', 'br', 'hr', 'div']):
-                # Not-a-Wiki stops lines after a break, a new line, or div, so we know the upgrade info stop there
-                if str(line) == "<br/>" or str(line) == "<hr/>" or str(line).startswith("<div"):
-                    break
-                else:
-                    # Otherwise, add the lines of upgrade to the list - line.text returns the text without HTML tags
-                    screen.append(line.text)
-            break
-
-    # Then we run the list through a formatter, and that becomes our new list
-    return format(screen, factionUpgrade)
-
-
-def factionChallengeSearch(faction):
-    # Retrieving data using Request and converting to BeautifulSoup object
-    nawLink = "http://musicfamily.org/realm/Challenges/"
-    content = requests.get(nawLink)
-    soup = BeautifulSoup(content.content, 'html5lib')
-
-    # Searching tags starting with <area>, which challenges' lines on NaW begin with
-    p = soup.find_all('area')
-
-    # Our upgrade info will be added here
-    screen = []
-
-    find = False
-    # Iterating through p, finding until upgrade matches
-    for tag in p:
-        if faction in tag['href']:
-            temp = tag['research'].split("</p>")
-            # The following is to convert tag['research'] into a format that the format() function will work with
-            temp = [re.sub("<p>|<b>|</b>|\n|\t", "", s) for s in temp]
-            temp.insert(0, temp[1])
-            temp.pop(2)
-            screen = screen + temp
-            find = True
-
-    if not find:
-        raise Exception("Invalid Input")
-
-    # Then we run the list through a formatter, and that becomes our new list
-    challengeName = screen[0].split("> ")[1]
-    return format(screen, challengeName)
-
-
-def researchSearch(res):
-    # hardcoding W3150 because it's the only research that has a problem with the parser, will actually properly fix later
-    if res == "W3150":
-        W3150 = ["W3150", "For All Factions", "Upheaval", "Requirement: 60000 Farms, Inns and Blacksmiths.",
-                 "Cost: 731.6 NoQig (7.316e182)",
-                 "Effect: Increases the production of all buildings based on their tier, giving the highest bonus to the lowest.",
-                 "Formula: (150 * (12 - T) ^ 2.15), where T is building tier."]
-        return W3150
-
-    # Yummy soup stuff
-    nawLink = "http://musicfamily.org/realm/Researchtree/"
-    content = requests.get(nawLink)
-    soup = BeautifulSoup(content.content, 'html5lib')
-
-    # Researches begin using area, so we get all of them directly here
-    p = soup.find_all('area')
-
-    for tag in p:
-        # Adding a space at the end avoids jumping checks like "S1" and "S10" for example due to startswith() function
-        if tag['research'].startswith(res + " "):
-            # Splitting into a list. We want it to look as below:
-            # <shorthand>, <for Faction>, <research Name>, <Requirements (optional)>, <Cost>, <Effect>
-            temp = re.split('\ \-\ |Research\ Name:|<p>|\ <p>|<p>\ |\ <p> ', tag['research'])
-            break
-
-    # Bad strings are bad
-    for line in temp:
-        if line in badSubstrings:
-            temp.remove(line)
-
-    return temp
-
 
 class Notawiki(commands.Cog):
     def __init__(self, bot):
@@ -176,8 +18,6 @@ class Notawiki(commands.Cog):
     @commands.command(aliases=alias["upgrade"])
     async def upgrade(self, ctx, arg=None, number=None):
         """Retrieves information of a Faction Upgrade from Not-a-Wiki"""
-        global color
-        global faction
 
         # Checking if input returns an abbreviation faction i.e. FR7 or MK11, also accepts lowercase inputs
         if arg[2].isdigit() and number is None:
@@ -208,7 +48,7 @@ class Notawiki(commands.Cog):
 
         async with ctx.channel.typing():
             # We get our list through Not-a-Wiki Beautiful Soup search
-            data = factionUpgradeSearch(faction)
+            data = NaWSearch.factionUpgrade(faction)
 
             # Embed things, using the list retrieved from factionUpgradeSearch
             thumbnail = data[0]
@@ -220,18 +60,19 @@ class Notawiki(commands.Cog):
 
             # Since the first two lines always are guaranteed to be an url and name of Faction upgrade, we ignore
             # them, and then start processing adding new fields for each line
-            for line in data[2:]:
-                newline = line.split(": ")
-                first = f'**{newline[0]}**'
-                embed.add_field(name=first, value=newline[1], inline=False)
+            try:
+                for line in data[2:]:
+                    newline = line.split(": ")
+                    first = f'**{newline[0]}**'
+                    embed.add_field(name=first, value=newline[1], inline=False)
+            except IndexError:
+                return await ctx.send('There is something wrong with this upgrade. Notify Alright#2304')
 
         await ctx.send(embed=embed)
 
     @commands.command(aliases=alias["challenge"])
     async def challenge(self, ctx, arg=None, number=None):
         """Retrieves information of a Faction Challenge from Not-a-Wiki"""
-        global color
-        global faction
 
         # Checking if input returns an abbreviation faction i.e. FR2 or MK5, also accepts lowercase inputs
         if arg[2].isdigit() or arg[2] in ["R", "r", "C", "c"] and number is None:
@@ -263,7 +104,7 @@ class Notawiki(commands.Cog):
             raise Exception('Invalid Input')
 
         async with ctx.channel.typing():
-            data = factionChallengeSearch(faction)
+            data = NaWSearch.challenge(faction)
 
             ignore = 4
 
@@ -291,7 +132,7 @@ class Notawiki(commands.Cog):
     @commands.command(aliases=alias["research"])
     async def research(self, ctx, researchName=None):
         """Retrieves Research upgrade from Not-a-Wiki"""
-        global image
+        image = ''
 
         # Capitalizing researchName, adding check and importing the research dict
         researchName = researchName.upper()
@@ -309,7 +150,7 @@ class Notawiki(commands.Cog):
             raise Exception("Invalid Input")
 
         async with ctx.channel.typing():
-            data = researchSearch(researchName)
+            data = NaWSearch.research(researchName)
 
             # data[0] and data[2] returns the shorthand research and the name of research
             title = f'{data[0]} - {data[2]}'
@@ -322,19 +163,22 @@ class Notawiki(commands.Cog):
                              icon_url="http://musicfamily.org/realm/Factions/picks/RealmGrinderGameRL.png")
             embed.set_thumbnail(url=image)
 
-            # Cleaning the list a little, removing white spaces and also </p> that the re.compile didn't catch
+            # Cleaning the list
             for line in data[3:]:
                 line = line.strip()
-                if line.endswith("</p>"):
-                    line = line.replace("</p>", "")
                 newLine = line.split(": ")
                 embed.add_field(name=f'**{newLine[0]}**', value=newLine[1], inline=False)
 
         await ctx.send(embed=embed)
 
+    @commands.command(aliases=alias['lineage'])
+    async def lineage(self, ctx, faction, number):
+        pass
+
     @upgrade.error
     @challenge.error
     @research.error
+    @lineage.error
     async def universal_error(self, ctx, error):
         if isinstance(error, Exception):
             title = " :exclamation:  Command Error!"

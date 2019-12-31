@@ -235,7 +235,8 @@ researchBranchesdict = {
     "Divine": "http://musicfamily.org/realm/Factions/picks/Diviner.png",
     "Economics": "http://musicfamily.org/realm/Factions/picks/Economicsr.png",
     "Alchemy": "http://musicfamily.org/realm/Factions/picks/Alchemyr.png",
-    "Warfare": "http://musicfamily.org/realm/Factions/picks/Warfarer.png"
+    "Warfare": "http://musicfamily.org/realm/Factions/picks/Warfarer.png",
+    "Forbidden": "http://musicfamily.org/realm/Factions/picks/Forbiddenr.png"
 }
 
 
