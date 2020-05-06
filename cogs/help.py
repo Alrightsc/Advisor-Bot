@@ -19,7 +19,8 @@ class Help(commands.Cog):
             title = "Advisor - Realm Grinder Bot"
             description = "Hello! I am the Royal Advisor here to help you on the path to becoming the richest king/queen" \
                           " in the realm! Use the commands below and I can help query information from Not A Wiki." \
-                          "\n\nBot written by Alright#2304. Any issue, feedback, or suggestion can be PM'd to me directly." \
+                          "\n\nBot written by Alright#2304. Any issue or feedback can be PM'd to me directly." \
+                          "\n\nNot-a-Wiki Link: http://musicfamily.org/realm/" \
                           "\nGithub link: https://github.com/Alrightsc/Advisor-Bot" \
                           "\n\n" \
                           "**help** - Default help; help <command> below also gets more info about that command" \
@@ -51,9 +52,11 @@ class Help(commands.Cog):
         if cmd in alias["upgrade"]:
             emoji = discord.utils.get(ctx.guild.emojis, name="SuggestionMaster")
             description = "**.upgrade <faction>**\n**Aliases: **" + ', '.join(alias["upgrade"]) + \
-                          "\n\nRetrieves a Faction upgrade information " \
-                          "directly from Not-a-Wiki. <faction> inputs can be using two-letter Mercenary Template with " \
-                          "upgrade number, or full Faction name with an upgrade number.\n\nExamples: Fairy 7, MK10 "
+                          '\n\nRetrieves a Faction upgrade information ' \
+                          'directly from Not-a-Wiki. <faction> inputs can be using two-letter Mercenary Template with ' \
+                          'upgrade number, or full Faction name with an upgrade number.' \
+                          '\n\n**Note:** Non-faction upgrades such as Secret Trophy upgrades are not supported!' \
+                          '\n\nExamples: Fairy 7, MK10'
             embed = discord.Embed(title=f"{emoji}  Upgrade", description=description,
                                   colour=self.color)
             return await ctx.send(embed=embed)

@@ -14,10 +14,20 @@ alias = {
 class Notawiki(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.color = discord.Colour.magenta()
 
     @commands.command(aliases=alias["upgrade"])
     async def upgrade(self, ctx, arg=None, number=None):
         """Retrieves information of a Faction Upgrade from Not-a-Wiki"""
+        if arg in ['help', 'Help'] or (arg == None and number == None):
+            emoji = discord.utils.get(ctx.guild.emojis, name="SuggestionMaster")
+            description = "**.upgrade <faction>**\n**Aliases: **" + ', '.join(alias["upgrade"]) + \
+                          "\n\nRetrieves a Faction upgrade information " \
+                          "directly from Not-a-Wiki. <faction> inputs can be using two-letter Mercenary Template with " \
+                          "upgrade number, or full Faction name with an upgrade number.\n\nExamples: Fairy 7, MK10 "
+            embed = discord.Embed(title=f"{emoji}  Upgrade", description=description,
+                                  colour=self.color)
+            return await ctx.send(embed=embed)
 
         # Checking if input returns an abbreviation faction i.e. FR7 or MK11, also accepts lowercase inputs
         if arg[2].isdigit() and number is None:
@@ -73,6 +83,16 @@ class Notawiki(commands.Cog):
     @commands.command(aliases=alias["challenge"])
     async def challenge(self, ctx, arg=None, number=None):
         """Retrieves information of a Faction Challenge from Not-a-Wiki"""
+        if arg in ['help', 'Help'] or (arg == None and number == None):
+            emoji = discord.utils.get(ctx.guild.emojis, name="SuggestionMaster")
+            description = "**.challenge <faction>**\n**Aliases: **" + ', '.join(alias["challenge"]) + "\n\nRetrieves " \
+                          "challenge info from Not-a-Wiki displaying name, requirements, effects, and formulas. Valid " \
+                          "inputs include using faction name and the challenge number, or r for spell challenge " \
+                          "reward. Mercenary templates in place of full name can be used, adding C# or \"R\".\n\nExample: " \
+                          "Fairy 2, Makers r, DGC5, DJR"
+            embed = discord.Embed(title=f"{emoji}  Challenge", description=description,
+                                  colour=self.color)
+            return await ctx.send(embed=embed)
 
         # Checking if input returns an abbreviation faction i.e. FR2 or MK5, also accepts lowercase inputs
         if arg[2].isdigit() or arg[2] in ["R", "r", "C", "c"] and number is None:
@@ -124,14 +144,20 @@ class Notawiki(commands.Cog):
             # Ignore the first 4 fields and create the rest
             for line in data[ignore:]:
                 newline = line.split(": ")
-                first = f'**{newline[0]}**'
-                embed.add_field(name=first, value=newline[1], inline=False)
+                embed.add_field(name=f'**{newline[0]}**', value=newline[1], inline=False)
 
         await ctx.send(embed=embed)
 
     @commands.command(aliases=alias["research"])
     async def research(self, ctx, researchName=None):
         """Retrieves Research upgrade from Not-a-Wiki"""
+        if researchName in ['help', 'Help'] or researchName == None:
+            description = "**.research <research>**\n**Aliases: **" + ', '.join(alias["research"]) + "\n\nRetrieves the " \
+                    "Research info from Not-a-Wiki in an embed displaying name, cost, formula, and effect." \
+                    "\n\nAcceptable inputs are only using research branch + number (i.e. S10, C340, E400)."
+            emoji = discord.utils.get(ctx.guild.emojis, name="SuggestionMaster")
+            embed = discord.Embed(title=f"{emoji}  Research", description=description, colour=self.color)
+            return await ctx.send(embed=embed)
         image = ''
 
         # Capitalizing researchName, adding check and importing the research dict
@@ -158,7 +184,7 @@ class Notawiki(commands.Cog):
             # mostly "For x factions"
             description = data[1]
 
-            embed = discord.Embed(title=title, description=description, colour=discord.Colour.dark_green())
+            embed = discord.Embed(title=title, description=description, colour=self.color)
             embed.set_footer(text="http://musicfamily.org/realm/Researchtree/",
                              icon_url="http://musicfamily.org/realm/Factions/picks/RealmGrinderGameRL.png")
             embed.set_thumbnail(url=image)
@@ -172,8 +198,47 @@ class Notawiki(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command(aliases=alias['lineage'])
-    async def lineage(self, ctx, faction, number):
-        pass
+    @commands.is_owner()
+    async def lineage(self, ctx, faction, number=None):
+        if (faction is None and number is None) or faction == "help":
+            description = "**.lineage <faction> <perk>**\n**Aliases: **" + ', '.join(alias["lineage"]) + "\n\nRetrieves the " \
+                    "Lineage info from Not-a-Wiki in an embed displaying name, cost, formula, and effect. Also includes challenges." \
+                    "\n\nAcceptable inputs include full or shortened faction names, plus the number of perk (can be left empty to get base effect)." \
+                    "\n\nExample: .lineage Fairy, .line Dwarf 4"
+            emoji = discord.utils.get(ctx.guild.emojis, name="SuggestionMaster")
+            embed = discord.Embed(title=f"{emoji}  Research", description=description, colour=self.color)
+            return await ctx.send(embed=embed)
+
+        if len(faction) == 2:
+            faction = faction.upper()
+            faction = FactionUpgrades.getFactionNameFull(faction)
+            if not faction:
+                print('1')
+                raise Exception('Invalid Input')
+        else:
+            faction = faction.lower()
+            faction = faction.capitalize()
+
+        if faction == 'Elf':
+            faction = 'Elven'
+        elif faction == 'Dwarf':
+            faction = 'Dwarven'
+
+        async with ctx.channel.typing():
+            lineageEmbed = NaWSearch.lineage(faction, number)
+
+            title = f'{lineageEmbed[1]}'
+            image = lineageEmbed[0]
+
+            embed = discord.Embed(title=title, colour=self.color)
+            embed.set_footer(text="http://musicfamily.org/realm/Lineages/", icon_url="http://musicfamily.org/realm/Factions/picks/RealmGrinderGameRL.png")
+            embed.set_thumbnail(url=image)
+
+            for line in lineageEmbed[2:]:
+                line = line.split(": ")
+                embed.add_field(name=f'**{line[0]}**', value=line[1], inline=False)
+
+        await ctx.send(embed=embed)
 
     @upgrade.error
     @challenge.error
@@ -183,6 +248,7 @@ class Notawiki(commands.Cog):
         if isinstance(error, Exception):
             title = " :exclamation:  Command Error!"
             description = "The parameters you used are not found in the list. Please try again."
+            print(error)
             embed = discord.Embed(title=title, description=description, colour=discord.Colour.red())
             return await ctx.send(embed=embed)
 

@@ -7,7 +7,7 @@ import datetime
 import requests
 
 badSubstrings = ["", "Cost", "Effect", "Formula", "Mercenary Template", "Requirement", "Gem Grinder and Dragon's "
-                "Breath Formula", 'Formula: ', 'Requirements']
+                "Breath Formula", 'Formula: ', 'Requirements', 'Challenge']
 
 
 def Embedformat(lst: list, factionUpgrade=None):
@@ -17,8 +17,7 @@ def Embedformat(lst: list, factionUpgrade=None):
     url = lst[0]
     extractor = URLExtract()
     newUrl = extractor.find_urls(url)
-    lst.remove(url)
-    lst.insert(0, newUrl[0])
+    lst[0] = newUrl[0]
 
     # We add the faction upgrade name to the list so embed can refer to this
     if factionUpgrade is not None:
@@ -54,7 +53,7 @@ def Embedformat(lst: list, factionUpgrade=None):
 
     # A little less for the Druid Challenges reward - remove picture from lst
     if factionUpgrade == "Primal Balance":
-        lst.pop(5)
+        lst.remove(lst[5])
 
     return lst
 
@@ -116,16 +115,21 @@ def challenge(faction):
             # The following is to convert tag['research'] into a format that the format() function will work with
             temp = [re.sub("<p>|<b>|</b>|\n|\t", "", s) for s in temp]
             temp.insert(0, temp[1])
-            temp.pop(2)
+            temp.remove(temp[2])
             challengeEmbed = temp
             find = True
 
     if not find:
         raise Exception("Invalid Input")
 
+    old = challengeEmbed[0]
+    new = challengeEmbed[1]
+    challengeEmbed[0] = new
+    challengeEmbed[1] = old
+
     # Then we run the list through a formatter, and that becomes our new list
-    challengeName = challengeEmbed[0].split("> ")[1]
-    return Embedformat(challengeEmbed, challengeName)
+    challengeName = challengeEmbed[0].split("> ")
+    return Embedformat(challengeEmbed, challengeName[1])
 
 
 def research(research):
@@ -143,18 +147,24 @@ def research(research):
             # Splitting into a list. We want it to look as below:
             # <shorthand>, <for Faction>, <research Name>, <Requirements (optional)>, <Cost>, <Effect>
             researchContents = []
-            for line in tag['research'].split("\t"):
+            for line in tag['research'].split("\n"):
                 line = line.strip('\n')
                 researchContents.append(line)
             break
 
+    #special exception for these researches due to NaW's additive/multiplicative formulas
+    if research in ['C5375','E5375']:
+        researchContents[-2] = researchContents[-2].strip()
+        researchContents[-3] = researchContents[-3].strip()
+        researchContents.remove(researchContents[-4])
+
     # Bad strings are bad
-    researchEmbed = [re.sub("|<p>|<b>|</b>|\n|\t", "", s) for s in researchContents]
+    researchEmbed = [re.sub("|<p>|<b>|</b>|\n|\t|</p>", "", s) for s in researchContents]
     for string in badSubstrings:
         if string in researchEmbed:
             researchEmbed.remove(string)
 
-    # Splitting contents, switching around
+    # Splitting contents, switching around, prettifying embeds
     original = researchEmbed[0].split(' - ')
     researchEmbed[0] = original[0]
     researchEmbed.insert(1, original[1])
@@ -213,3 +223,5 @@ def lineage(faction, perk):
     lineageEmbed[1] = lineageEmbed[1].strip()
 
     return lineageEmbed
+
+print(lineage("Titan", None))
