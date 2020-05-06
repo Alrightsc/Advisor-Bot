@@ -223,5 +223,3 @@ def lineage(faction, perk):
     lineageEmbed[1] = lineageEmbed[1].strip()
 
     return lineageEmbed
-
-print(lineage("Titan", None))

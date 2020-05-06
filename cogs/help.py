@@ -26,7 +26,8 @@ class Help(commands.Cog):
                           "**help** - Default help; help <command> below also gets more info about that command" \
                           "\n**upgrade** (upg, up, u) - Retrieves info for a Faction-only upgrade" \
                           "\n**challenge** (ch, c) - Retrieves info for a faction Challenge" \
-                          "\n**research** (res, r) - Retrieves info for a Research upgrade"
+                          "\n**research** (res, r) - Retrieves info for a Research upgrade" \
+                          "\n**lineage** (line, l) - Retrieves info for a specific Lineage"
             embed = discord.Embed(title=title, description=description, colour=self.color)
             return await ctx.send(embed=embed)
 
@@ -59,6 +60,15 @@ class Help(commands.Cog):
                           '\n\nExamples: Fairy 7, MK10'
             embed = discord.Embed(title=f"{emoji}  Upgrade", description=description,
                                   colour=self.color)
+            return await ctx.send(embed=embed)
+
+        if cmd in alias["lineage"]:
+            description = "**.lineage <faction> <perk>**\n**Aliases: **" + ', '.join(alias["lineage"]) + "\n\nRetrieves the " \
+                    "Lineage info from Not-a-Wiki in an embed displaying name, cost, formula, and effect. Also includes challenges." \
+                    "\n\nAcceptable inputs include full or shortened faction names, plus the number of perk (can be left empty to get base effect)." \
+                    "\n\nExample: .lineage Fairy, .line Dwarf 4"
+            emoji = discord.utils.get(ctx.guild.emojis, name="SuggestionMaster")
+            embed = discord.Embed(title=f"{emoji}  Research", description=description, colour=self.color)
             return await ctx.send(embed=embed)
 
 ####
