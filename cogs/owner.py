@@ -106,5 +106,15 @@ class Owner(commands.Cog):
     async def uptime(self, ctx):
         await ctx.send(f':alarm_clock: Uptime: {self.get_bot_uptime()}')
 
+    @commands.command(hidden=True)
+    @commands.is_owner()
+    async def joindate(self, ctx, *, member: discord.Member):
+        """Says when a member joined."""
+        if member == None:
+            member = ctx.author
+        await ctx.send(f'{member.display_name} joined on {member.joined_at}.')
+
+
+
 def setup(bot):
     bot.add_cog(Owner(bot))

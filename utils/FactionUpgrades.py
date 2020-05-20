@@ -14,7 +14,8 @@ factionAbbrDict = {
     "Dragon": ["DG", 0x27af27],
     "Archon": ["AR", 0xc5dff8],
     "Djinn": ["DJ", 0xa78bd9],
-    "Makers": ["MK", 0xf0f0f0]
+    "Makers": ["MK", 0xf0f0f0],
+    "Mercenary": ["MC", 0x000000]
 }
 
 factionUpgradesDict = {

@@ -81,9 +81,9 @@ class Notawiki(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command(aliases=alias["challenge"])
-    async def challenge(self, ctx, arg=None, number=None):
+    async def challenge(self, ctx, faction=None, number=None):
         """Retrieves information of a Faction Challenge from Not-a-Wiki"""
-        if arg in ['help', 'Help'] or (arg == None and number == None):
+        if faction in ['help', 'Help'] or (faction == None and number == None):
             emoji = discord.utils.get(ctx.guild.emojis, name="SuggestionMaster")
             description = "**.challenge <faction>**\n**Aliases: **" + ', '.join(alias["challenge"]) + "\n\nRetrieves " \
                           "challenge info from Not-a-Wiki displaying name, requirements, effects, and formulas. Valid " \
@@ -94,30 +94,34 @@ class Notawiki(commands.Cog):
                                   colour=self.color)
             return await ctx.send(embed=embed)
 
+        # Too many people call Mercenary "merc" so this is to make it easier
+        if faction in ["merc", "Merc"]:
+            faction = "Mercenary"
+
         # Checking if input returns an abbreviation faction i.e. FR2 or MK5, also accepts lowercase inputs
-        if arg[2].isdigit() or arg[2] in ["R", "r", "C", "c"] and number is None:
-            if arg[2] in ["C", "c"]:
-                arg = arg[:2] + arg[3:]
-            faction = arg.upper()
-            argColor = faction[0:2]
-            color = FactionUpgrades.getFactionColour(argColor)
+        if faction[2].isdigit() or faction[2] in ["R", "r", "C", "c"] and number is None:
+            if faction[2] in ["C", "c"]:
+                faction = faction[:2] + faction[3:]
+            faction = faction.upper()
+            factionColor = faction[0:2]
+            color = FactionUpgrades.getFactionColour(factionColor)
             # No huge dictionary this time around
-            faction2 = FactionUpgrades.getFactionNameFull(argColor)
+            faction2 = FactionUpgrades.getFactionNameFull(factionColor)
             faction = faction2 + faction[0] + "C" + faction[2:]
 
         # if number is added as an input, we automatically assume the full term, i.e. "Fairy 7"
         elif number is not None:
             # Number checker has been moved to factionChallengeSearch()
-            arg2 = arg.lower()
-            arg2 = arg2.capitalize()
-            checks, fac, color = FactionUpgrades.getFactionAbbr(arg2)
+            faction = faction.lower()
+            faction = faction.capitalize()
+            checks, fac, color = FactionUpgrades.getFactionAbbr(faction)
 
             # checks is retrieved from FactionUpgrades, if the term is not in dictionary it returns False and we
             # raise Exception error
             if checks is False:
                 raise Exception('Invalid Input')
             else:
-                faction = arg2 + arg2[0] + "C" + str(number).upper()
+                faction = faction + faction[0] + "C" + str(number).upper()
 
         # if inputs match neither above, raise Exception
         else:
@@ -125,7 +129,6 @@ class Notawiki(commands.Cog):
 
         async with ctx.channel.typing():
             data = NaWSearch.challenge(faction)
-
             ignore = 4
 
             # Embed things, using the list retrieved from factionChallengeSearch
@@ -136,10 +139,14 @@ class Notawiki(commands.Cog):
                 ignore = 3
             else:
                 title = f'**{data[2]} : {data[1]}**'
+
             embed = discord.Embed(title=title, colour=discord.Colour(color), timestamp=datetime.datetime.utcnow())
             embed.set_footer(text="http://musicfamily.org/realm/Challenges/",
                              icon_url="http://musicfamily.org/realm/Factions/picks/RealmGrinderGameRL.png")
             embed.set_thumbnail(url=thumbnail)
+
+            if faction == "MercenaryMCR":
+                return await ctx.send('This challenge reward is disabled for a bit due to the embed being too large. See: http://musicfamily.org/realm/Challenges/')
 
             # Ignore the first 4 fields and create the rest
             for line in data[ignore:]:
@@ -198,7 +205,6 @@ class Notawiki(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command(aliases=alias['lineage'])
-    @commands.is_owner()
     async def lineage(self, ctx, faction, number=None):
         if (faction is None and number is None) or faction == "help":
             description = "**.lineage <faction> <perk>**\n**Aliases: **" + ', '.join(alias["lineage"]) + "\n\nRetrieves the " \
@@ -213,12 +219,12 @@ class Notawiki(commands.Cog):
             faction = faction.upper()
             faction = FactionUpgrades.getFactionNameFull(faction)
             if not faction:
-                print('1')
                 raise Exception('Invalid Input')
         else:
             faction = faction.lower()
             faction = faction.capitalize()
 
+        # nobody calls elf/dwarf "Elven/Dwarven", it's not hip
         if faction == 'Elf':
             faction = 'Elven'
         elif faction == 'Dwarf':

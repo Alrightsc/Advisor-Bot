@@ -7,7 +7,7 @@ import datetime
 import requests
 
 badSubstrings = ["", "Cost", "Effect", "Formula", "Mercenary Template", "Requirement", "Gem Grinder and Dragon's "
-                "Breath Formula", 'Formula: ', 'Requirements', 'Challenge']
+                "Breath Formula", 'Formula: ', 'Requirements', 'Challenge', 'Note']
 
 
 def Embedformat(lst: list, factionUpgrade=None):
@@ -215,11 +215,12 @@ def lineage(faction, perk):
     if not lineageEmbed:
         raise Exception("Invalid Input")
 
-    for i in badSubstrings:
-        for j in lineageEmbed:
-            if i == j:
-                lineageEmbed.remove(i)
-
+    for badword in badSubstrings:
+        if badword in lineageEmbed:
+            lineageEmbed.remove(badword)
     lineageEmbed[1] = lineageEmbed[1].strip()
 
     return lineageEmbed
+
+print(challenge('MCR'))
+print(challenge('MakersMCR'))
