@@ -1,3 +1,5 @@
+from re import search
+
 factionAbbrDict = {
     # Comparisons for full and abbreviation factions, also colors will be checked in here
     "Fairy": ["FR", 0xff99ff],
@@ -240,28 +242,117 @@ researchBranchesdict = {
     "Forbidden": "http://musicfamily.org/realm/Factions/picks/Forbiddenr.png"
 }
 
+artifactsList = [
+    "Ancient Stoneslab 1",
+    "Fossilized Piece of Bark 1",
+    "Bone Fragment 1",
+    "Ancient Stoneslab 2",
+    "Fossilized Piece of Bark 2",
+    "Bone Fragment 2",
+    "Key to the Lost City",
+    "Ancient Device",
+    "Earth Core",
+    "Horn of the Kings",
+    "Flame of Bondelnar",
+    "Spiky Rough Egg",
+    "Obsidian Shard",
+    "First Iron Fragment",
+    "Second Iron Fragment",
+    "Third Iron Fragment",
+    "First Crystal Fragment",
+    "Second Crystal Fragment",
+    "Third Crystal Fragment",
+    "First Stone Fragment",
+    "Second Stone Fragment",
+    "Third Stone Fragment",
+    "Obsidian Crown",
+    "Forgotten Relic",
+    "Rough Stone",
+    "Scarab of Fortune",
+    "Chocolate Cookie",
+    "Fossilized Rodent",
+    "Power Orb",
+    "Pink Carrot",
+    "Bottled Voice",
+    "Lucky Clover",
+    "Mini-treasure",
+    "Pillar Fragment",
+    "Divine Sword",
+    "Ancient Coin Piece",
+    "Goblin Purse",
+    "Rotten Organ",
+    "Jaw Bone,"
+    "Demonic Figurine",
+    "Demon Horn",
+    "Huge Titan Statue",
+    "Titan Shield",
+    "Glyph Table",
+    "Stone of Balance",
+    "Translucent Goo",
+    "Octopus-shaped Helmet",
+    "Dwarven Bow",
+    "Stone Tankard",
+    "Ceremonial Dagger",
+    "Arachnid Figurine",
+    "Steel Plate",
+    "Black Sword",
+    "Dragon Fang",
+    "Dragon Soul",
+    "Vanilla Flavor Juice",
+    "Ancient Cocoa Bean",
+    "Know Your Enemy, Part I",
+    "Voodoo Doll",
+    "Wall Fragment",
+    "Fortune Teller Machine",
+    "Dawnstone",
+    "Duskstone",
+    "Ancient Heirloom",
+    "Know Your Enemy, Part II",
+    "Veteran Figurine",
+    "Wall Chunk",
+    "Excavated Mirage",
+    "Ancestral Hourglass",
+    "Silk Cloth",
+    "Raw Emerald",
+    "Fossilized Wing",
+    "Spiked Whip",
+    "Dusty Coffin",
+    "Crystallized Lava",
+    "Titan Helmet",
+    "Branch of the Life Tree",
+    "Nightmare Figment",
+    "Beard Hair",
+    "Poison Vial",
+    "Dragon Scale",
+    "Lantern of Guidance",
+    "Oil Lamp",
+    "Spark of Life",
+    "Planetary Force",
+    "Mercenary Insiginia",
+    "Mana Loom",
+    "Factory",
+    "Mythos",
+    "Vault",
+    "Athanor",
+    "Battlefield",
+    "Apeiron"
+]
 
 def getFactionColour(abbr):
     # Gets the color from dictionary if value matches abbreviation
-    color = int()
     for key, value in factionAbbrDict.items():
-        if value[0] == abbr:
-            color = value[1]
-            break
-    return color
+        if value[0] == abbr or key == abbr:
+            return int(value[1])
 
 
 def getFactionAbbr(faction):
     # Gets the faction abbreviation, returns True if found, and also the abbreviation/color, False otherwise
-    checks = False
 
     for key, value in factionAbbrDict.items():
         if key == faction:
-            checks = True
             return True, value[0], value[1]
 
-    if not checks:
-        return checks, None, None
+    return False, None, None
 
 
 def getFactionUpgradeName(faction):
@@ -275,12 +366,32 @@ def getFactionNameFull(faction):
 
     for key, value in factionAbbrDict.items():
         if faction in value:
-            checks = True
             return key
 
     if not checks:
         return None
 
+def fastArtifactSearch(artifact):
+    artList = []
+    artifact = artifact.lower()
 
-def getResearchBranch():
-    return researchBranchesdict
+    for line in artifactsList:
+        if artifact in line.lower():
+            artList.append(line)
+
+    if artifact in ['kye 1', 'kye i', 'kye', 'kye1']:
+        artList.append("Know Your Enemy, Part I")
+
+    if artifact in ['kye 2', 'kye ii', 'kye', 'kye2']:
+        artList.append("Know Your Enemy, Part II")
+
+    if artifact in ['ftm']:
+        artList.append("Fortune Teller Machine")
+
+    if artifact in ['vfj']:
+        artList.append("Vanilla Flavor Juice")
+
+    if artifact in ['vf']:
+        artList.append("Veteran Figurine")
+
+    return artList

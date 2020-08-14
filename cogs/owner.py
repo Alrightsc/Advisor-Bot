@@ -5,7 +5,8 @@ from discord.ext import commands
 
 extensions = ['cogs.notawiki',
               'cogs.help',
-              'cogs.owner']
+              'cogs.owner',
+              'cogs.help']
 
 class Owner(commands.Cog):
     def __init__(self, bot):

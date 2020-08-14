@@ -5,7 +5,10 @@ import discord
 alias = {
     "upgrade": ["upg", "up", "u", "upgrade"],
     "challenge": ["ch", "c", "challenge"],
-    "research": ["r", "res", "research"]
+    "research": ["r", "res", "research"],
+    "lineage": ["lineage", "line", "l"],
+    "artifact": ["artifact", "art", "a"],
+    "bloodline": ["bloodline", "bl", "b"]
 }
 
 class Help(commands.Cog):
@@ -23,11 +26,13 @@ class Help(commands.Cog):
                           "\n\nNot-a-Wiki Link: http://musicfamily.org/realm/" \
                           "\nGithub link: https://github.com/Alrightsc/Advisor-Bot" \
                           "\n\n" \
-                          "**help** - Default help; help <command> below also gets more info about that command" \
-                          "\n**upgrade** (upg, up, u) - Retrieves info for a Faction-only upgrade" \
+                          "**help** - help <command> below also gets more info about that command" \
+                          "\n**artifact** (art, a) - Searches and retrieves info for an Artifact" \
+                          "\n**bloodline** (bl, b) - Retrieves info for a faction Bloodline" \
                           "\n**challenge** (ch, c) - Retrieves info for a faction Challenge" \
+                          "\n**lineage** (line, l) - Retrieves info for a specific Lineage" \
                           "\n**research** (res, r) - Retrieves info for a Research upgrade" \
-                          "\n**lineage** (line, l) - Retrieves info for a specific Lineage"
+                          "\n**upgrade** (upg, up, u) - Retrieves info for a Faction-only upgrade"
             embed = discord.Embed(title=title, description=description, colour=self.color)
             return await ctx.send(embed=embed)
 
@@ -69,6 +74,24 @@ class Help(commands.Cog):
                     "\n\nExample: .lineage Fairy, .line Dwarf 4"
             emoji = discord.utils.get(ctx.guild.emojis, name="SuggestionMaster")
             embed = discord.Embed(title=f"{emoji}  Research", description=description, colour=self.color)
+            return await ctx.send(embed=embed)
+
+        if cmd in alias["artifact"]:
+            description = "**.artifact <keyword>**\n**Aliases: **" + ', '.join(alias["artifact"]) + "\n\nRetrieves the " \
+                          "Artifact info from Not-a-Wiki in an embed displaying name, cost, formula, and effect(s) given a keyword. " \
+                          "If there are multiple artifacts, they will be listed instead and you'll be asked to refine the search a bit more." \
+                          "\n\nExample: .artifact Silk Cloth, .art core, .a statue"
+            emoji = discord.utils.get(ctx.guild.emojis, name="SuggestionMaster")
+            embed = discord.Embed(title=f"{emoji}  Artifact", description=description, colour=self.color)
+            return await ctx.send(embed=embed)
+
+        if cmd in alias["bloodline"]:
+            description = "**.bloodline <faction>**\n**Aliases: **" + ', '.join(alias["bloodline"]) + \
+                          "\n\nRetrieves the Bloodline info from the wiki. " \
+                          "<faction> inputs can be using two-letter Mercenary Template, or the full Faction name. " \
+                          "\n\nExamples: .bloodline Fairy, .bl AR "
+            emoji = discord.utils.get(ctx.guild.emojis, name="SuggestionMaster")
+            embed = discord.Embed(title=f"{emoji}  Bloodline", description=description, colour=self.color)
             return await ctx.send(embed=embed)
 
 ####

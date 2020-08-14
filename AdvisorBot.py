@@ -28,9 +28,9 @@ class AdvisorBot(commands.AutoShardedBot):
     async def on_ready(self):
         if not hasattr(self, 'uptime'):
             self.uptime = datetime.datetime.utcnow()
-        await self.change_presence(status=discord.Status.online)
+        await self.change_presence(activity=discord.Game('Excavating more Rubies for your Majesty. .help for info'), status=discord.Status.online)
 
-        print(f'Online and running. {self.user} (ID: {self.user.id})')
+        print(f'Online and running. {self.user} (ID: {self.user.id}) at {datetime.datetime.utcnow()}.')
 
     def run(self):
         super().run(config.get_token(), reconnect=True)

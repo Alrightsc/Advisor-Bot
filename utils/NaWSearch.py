@@ -6,8 +6,8 @@ import re
 import datetime
 import requests
 
-badSubstrings = ["", "Cost", "Effect", "Formula", "Mercenary Template", "Requirement", "Gem Grinder and Dragon's "
-                "Breath Formula", 'Formula: ', 'Requirements', 'Challenge', 'Note']
+badSubstrings = ["", "Cost", 'Effect', "Formula", "Mercenary Template", "Requirement", "Gem Grinder and Dragon's "
+                "Breath Formula", 'Formula: ', 'Requirements', 'Challenge', 'Note', 'Effect', 'Tier 4 Formula', 'Tier 7 Formula', 'A3+ Formula', 'A3+ Effect']
 
 
 def Embedformat(lst: list, factionUpgrade=None):
@@ -65,7 +65,7 @@ def factionUpgrade(faction):
     # Retrieving data using Request and converting to BeautifulSoup object
     nawLink = "http://musicfamily.org/realm/FactionUpgrades/"
     content = requests.get(nawLink)
-    soup = BeautifulSoup(content.content, 'html5lib')
+    soup = BeautifulSoup(content.content, 'html.parser')
 
     # Searching tags starting with <p>, which upgrades' lines on NaW begin with
     p = soup.find_all('p')
@@ -99,7 +99,7 @@ def challenge(faction):
     # Retrieving data using Request and converting to BeautifulSoup object
     nawLink = "http://musicfamily.org/realm/Challenges/"
     content = requests.get(nawLink)
-    soup = BeautifulSoup(content.content, 'html5lib')
+    soup = BeautifulSoup(content.content, 'html.parser')
 
     # Searching tags starting with <area>, which challenges' lines on NaW begin with
     p = soup.find_all('area')
@@ -131,12 +131,12 @@ def challenge(faction):
     challengeName = challengeEmbed[0].split("> ")
     return Embedformat(challengeEmbed, challengeName[1])
 
-
 def research(research):
     # Yummy soup stuff
     nawLink = "http://musicfamily.org/realm/Researchtree/"
     content = requests.get(nawLink)
-    soup = BeautifulSoup(content.content, 'html5lib')
+    soup = BeautifulSoup(content.content, 'html.parser')
+    find = False
 
     # Researches begin using area, so we get all of them directly here
     p = soup.find_all('area')
@@ -144,6 +144,7 @@ def research(research):
     for tag in p:
         # Adding a space at the end avoids jumping checks like "S1" and "S10" for example due to startswith() function
         if tag['research'].startswith(research + " "):
+            find = True
             # Splitting into a list. We want it to look as below:
             # <shorthand>, <for Faction>, <research Name>, <Requirements (optional)>, <Cost>, <Effect>
             researchContents = []
@@ -151,6 +152,9 @@ def research(research):
                 line = line.strip('\n')
                 researchContents.append(line)
             break
+
+    if not find:
+        raise Exception("Invalid Input")
 
     #special exception for these researches due to NaW's additive/multiplicative formulas
     if research in ['C5375','E5375']:
@@ -178,7 +182,7 @@ def lineage(faction, perk):
     # Yummy soup stuff!
     nawLink = "http://musicfamily.org/realm/Lineages/"
     content = requests.get(nawLink)
-    soup = BeautifulSoup(content.content, 'html5lib')
+    soup = BeautifulSoup(content.content, 'html.parser')
 
     # Our list to send for Embeding
     lineageEmbed = []
@@ -218,9 +222,69 @@ def lineage(faction, perk):
     for badword in badSubstrings:
         if badword in lineageEmbed:
             lineageEmbed.remove(badword)
+
     lineageEmbed[1] = lineageEmbed[1].strip()
 
     return lineageEmbed
 
-print(challenge('MCR'))
-print(challenge('MakersMCR'))
+def artifactSearch(artifact):
+    artList = FactionUpgrades.fastArtifactSearch(artifact)
+    if len(artList) != 1:
+        return FactionUpgrades.fastArtifactSearch(artifact), False
+    else:
+        artifact = artList[0]
+
+    nawLink = "http://musicfamily.org/realm/Artifacts/"
+    content = requests.get(nawLink)
+    soup = BeautifulSoup(content.content, 'html.parser')
+
+    artifactContents = []
+    artifactEmbed = []
+    p = soup.find_all('area')
+
+    for tag in p:
+        if artifact in tag['research']:
+            artifactContents = tag['research'].split("\n")
+            break
+
+    artifactContents = [re.sub("|<p>|<b>|</b>|\n|\t|</p>", "", s) for s in artifactContents]
+    for line in artifactContents:
+        artifactEmbed.append(line.strip())
+
+    extractor = URLExtract()
+    newUrl = extractor.find_urls(artifactEmbed[0])
+    artifactEmbed.insert(0, newUrl[0])
+    artifactEmbed[1] = artifactEmbed[1].split("> ")[1]
+
+    for line in artifactEmbed:
+        if line in badSubstrings:
+            artifactEmbed.remove(line)
+
+    return artifactEmbed, True
+
+def bloodline(bloodline):
+    nawLink = "http://musicfamily.org/realm/Bloodline/"
+    content = requests.get(nawLink)
+    soup = BeautifulSoup(content.content, 'html.parser')
+
+    bloodlineContents = []
+    p = soup.find('p', attrs={'id' : bloodline})
+
+    bloodlineContents.append(str(p))
+    for tag in p.find_all_next():
+        if str(tag) in ['<hr/>', '<br/>'] or str(tag).startswith("<div"):
+            break
+        else:
+            bloodlineContents.append(tag.get_text())
+
+    bloodlineEmbed = [re.sub("|<p>|<b>|</b>|\n|\t|</p>", "", s) for s in bloodlineContents]
+
+    extractor = URLExtract()
+    newUrl = extractor.find_urls(bloodlineEmbed[0])
+    bloodlineEmbed[0] = newUrl[0]
+
+    for line in bloodlineEmbed:
+        if line in badSubstrings:
+            bloodlineEmbed.remove(line)
+
+    return bloodlineEmbed
