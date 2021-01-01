@@ -8,7 +8,8 @@ alias = {
     "research": ["r", "res", "research"],
     "lineage": ["lineage", "line", "l"],
     "artifact": ["artifact", "art", "a"],
-    "bloodline": ["bloodline", "bl", "b"]
+    "bloodline": ["bloodline", "bl", "b"],
+    "set": ["set", "s"]
 }
 
 class Help(commands.Cog):
@@ -32,6 +33,7 @@ class Help(commands.Cog):
                           "\n**challenge** (ch, c) - Retrieves info for a faction Challenge" \
                           "\n**lineage** (line, l) - Retrieves info for a specific Lineage" \
                           "\n**research** (res, r) - Retrieves info for a Research upgrade" \
+                          "\n**set** (s) - Retrieves info for an Artifact Set" \
                           "\n**upgrade** (upg, up, u) - Retrieves info for a Faction-only upgrade"
             embed = discord.Embed(title=title, description=description, colour=self.color)
             return await ctx.send(embed=embed)
@@ -92,6 +94,15 @@ class Help(commands.Cog):
                           "\n\nExamples: .bloodline Fairy, .bl AR "
             emoji = discord.utils.get(ctx.guild.emojis, name="SuggestionMaster")
             embed = discord.Embed(title=f"{emoji}  Bloodline", description=description, colour=self.color)
+            return await ctx.send(embed=embed)
+
+        if cmd in alias["set"]:
+            emoji = discord.utils.get(ctx.guild.emojis, name="SuggestionMaster")
+            description = "**.set <faction>**\n**Aliases: **" + ', '.join(alias["set"]) + \
+                          "\n\nRetrieves the Artifact Set info from the wiki. " \
+                          "<faction> inputs can be using two-letter Mercenary Template, or the full Faction name. " \
+                          "\n\nExamples: .set Merc, .s UD "
+            embed = discord.Embed(title=f"{emoji} Artifact Set", description=description, colour=self.color)
             return await ctx.send(embed=embed)
 
 ####

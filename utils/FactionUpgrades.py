@@ -1,6 +1,4 @@
-from re import search
-
-factionAbbrDict = {
+factionsDict = {
     # Comparisons for full and abbreviation factions, also colors will be checked in here
     "Fairy": ["FR", 0xff99ff],
     "Elf": ["EL", 0x33cc33],
@@ -23,12 +21,12 @@ factionAbbrDict = {
 factionUpgradesDict = {
     # Fairy
     "FR1": "Pixie Dust Fertilizer",
-    "FR2": "Fairy Cuisine",
-    "FR3": "Starmetal Alloys",
-    "FR4": "Fairy Workers",
+    "FR2": "Fairy Workers",
+    "FR3": "Kind Hearts",
+    "FR4": "Fairy Cuisine",
     "FR5": "Golden Pots",
     "FR6": "Spellsmith",
-    "FR7": "Kind Hearts",
+    "FR7": "Starmetal Alloys",
     "FR8": "Rainbow Link",
     "FR9": "Swarm of Fairies",
     "FR10": "Bubble Swarm",
@@ -38,14 +36,14 @@ factionUpgradesDict = {
     # Elf
     "EL1": "Elven Mint",
     "EL2": "Elven Treasure Casing",
-    "EL3": "Sylvan Treasure Frills",
+    "EL3": "Ancient Clicking Arts",
     "EL4": "Elven Emissary",
     "EL5": "Elven Efficiency",
     "EL6": "Secret Clicking Techniques",
     "EL7": "Elven Diplomacy",
     "EL8": "Elven Luck",
-    "EL9": "Ancient Clicking Arts",
-    "EL10": "Wooden Dices",
+    "EL9": "Sylvan Treasure Frills",
+    "EL10": "Wooden Dice",
     "EL11": "Camouflage",
     "EL12": "Elven Discipline",
 
@@ -68,8 +66,8 @@ factionUpgradesDict = {
     "GB2": "Slave Trading",
     "GB3": "Cheap Materials",
     "GB4": "Black Market",
-    "GB5": "Hobgoblin Gladiators",
-    "GB6": "Goblin Economists",
+    "GB5": "Goblin Economists",
+    "GB6": "Hobgoblin Gladiators",
     "GB7": "Goblin Central Bank",
     "GB8": "Fool's Gold",
     "GB9": "Green Fingers Discount",
@@ -88,8 +86,8 @@ factionUpgradesDict = {
     "UD8": "Tireless Workers",
     "UD9": "Undead Resilience",
     "UD10": "Flesh Servants",
-    "UD11": "Zombie Apocalypse",
-    "UD12": "Eternal Servitude",
+    "UD11": "Eternal Servitude",
+    "UD12": "Zombie Apocalypse",
 
     # Demon
     "DM1": "Torture Chambers",
@@ -108,13 +106,13 @@ factionUpgradesDict = {
     # Titan
     "TT1": "Colossal Forge",
     "TT2": "Charged Clicks",
-    "TT3": "Oversized Legends",
+    "TT3": "Titan Obelisk",
     "TT4": "Titan Drill",
     "TT5": "Charged Structures",
-    "TT6": "Cyclopean Strength",
-    "TT7": "Titan Sized Walls",
+    "TT6": "Titan Sized Walls",
+    "TT7": "Cyclopean Strength",
     "TT8": "Heavy Coins",
-    "TT9": "Titan Obelisk",
+    "TT9": "Oversized Legends",
     "TT10": "Giant Market",
     "TT11": "Titanic Authority",
     "TT12": "Colossus Kingdom",
@@ -281,7 +279,7 @@ artifactsList = [
     "Ancient Coin Piece",
     "Goblin Purse",
     "Rotten Organ",
-    "Jaw Bone,"
+    "Jaw Bone",
     "Demonic Figurine",
     "Demon Horn",
     "Huge Titan Statue",
@@ -335,20 +333,29 @@ artifactsList = [
     "Vault",
     "Athanor",
     "Battlefield",
-    "Apeiron"
+    "Apeiron",
+    "Glowing Wing",
+    "Sylvan Mirror",
+    "Solid Cloud",
+    "Orc Fang Necklace",
+    "Blood Chalice",
+    "Demon Tail",
+    "Frozen Lightning",
+    "Primal Leaf",
+    "The Blackest Ink"
 ]
 
-def getFactionColour(abbr):
+def getFactionColour(faction):
     # Gets the color from dictionary if value matches abbreviation
-    for key, value in factionAbbrDict.items():
-        if value[0] == abbr or key == abbr:
+    for key, value in factionsDict.items():
+        if faction in [key, value[0]]:
             return int(value[1])
 
 
 def getFactionAbbr(faction):
     # Gets the faction abbreviation, returns True if found, and also the abbreviation/color, False otherwise
 
-    for key, value in factionAbbrDict.items():
+    for key, value in factionsDict.items():
         if key == faction:
             return True, value[0], value[1]
 
@@ -362,14 +369,11 @@ def getFactionUpgradeName(faction):
 
 
 def getFactionNameFull(faction):
-    checks = False
-
-    for key, value in factionAbbrDict.items():
+    for key, value in factionsDict.items():
         if faction in value:
             return key
 
-    if not checks:
-        return None
+    return None
 
 def fastArtifactSearch(artifact):
     artList = []

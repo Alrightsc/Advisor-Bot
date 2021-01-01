@@ -10,7 +10,8 @@ alias = {
     "research": ["res", "r"],
     "lineage": ["line", "l"],
     "artifact": ["art", "a"],
-    "bloodline": ["bl", "b"]
+    "bloodline": ["bl", "b"],
+    "set": ["s"]
 }
 
 
@@ -33,6 +34,8 @@ class Notawiki(commands.Cog):
 
         # Checking if input returns an abbreviation faction i.e. FR7 or MK11, also accepts lowercase inputs
         if faction[2].isdigit() and number is None:
+            if faction[2:] < "1" or faction[2:] > "12":
+                raise Exception("The upgrade number must be between 1 and 12, Your Majesty.")
             faction = faction.upper()
             color = FactionUpgrades.getFactionColour(faction[0:2])
 
@@ -40,7 +43,7 @@ class Notawiki(commands.Cog):
         elif number is not None:
             # Some people just like to watch the world burn
             if int(number) < 1 or int(number) > 12:
-                raise Exception('Invalid Input')
+                raise Exception("The upgrade number must be between 1 and 12, Your Majesty.")
 
             faction = faction.lower()
             faction = faction.capitalize()
@@ -49,18 +52,18 @@ class Notawiki(commands.Cog):
             # checks is retrieved from FactionUpgrades, if the term is not in dictionary it returns False and we
             # raise Exception error
             if checks is False:
-                raise Exception('Invalid Input')
+                raise Exception("I seem to can\'t find that upgrade anywhere, Your Majesty.")
             else:
                 faction = fac + number
 
         # if inputs match neither above, raise Exception
         else:
-            raise Exception('Invalid Input')
+            raise Exception("I seem to can\'t find that upgrade anywhere, Your Majesty.")
 
         async with ctx.channel.typing():
             # We get our list through Not-a-Wiki Beautiful Soup search
             upgradeEmbed = NaWSearch.factionUpgrade(faction)
-            author: discord.Member = ctx.message.author
+            author: discord.Member = ctx.author
 
             # Embed things, using the list retrieved from factionUpgradeSearch
             title = f'**{upgradeEmbed[1]}**'
@@ -84,7 +87,6 @@ class Notawiki(commands.Cog):
     @commands.command(aliases=alias["challenge"])
     async def challenge(self, ctx: commands.Context, faction=None, number=None):
         """Retrieves information of a Faction Challenge from Not-a-Wiki"""
-
         # Help command
         if faction in ['help', 'Help'] or (faction == None and number == None):
             emoji = discord.utils.get(ctx.guild.emojis, name="SuggestionMaster")
@@ -133,16 +135,8 @@ class Notawiki(commands.Cog):
         async with ctx.channel.typing():
             challengeEmbed = NaWSearch.challenge(faction)
             author: discord.Member = ctx.message.author
-            ignore = 4  # Default ignore for challenge embed
 
-            # Spell rewards need special formatting
-            if faction[-1:] == "R":
-                title = f'**{challengeEmbed[1]}**'
-                ignore = 3  # Changes to 3 if challenge is specifically a reward
-            else:
-                title = f'**{challengeEmbed[2]} : {challengeEmbed[1]}**'
-
-            embed = discord.Embed(title=title, colour=discord.Colour(color), timestamp=datetime.datetime.utcnow()) \
+            embed = discord.Embed(title=f'**{challengeEmbed[1]}**', colour=discord.Colour(color), timestamp=datetime.datetime.utcnow()) \
                 .set_footer(text="http://musicfamily.org/realm/Challenges/",
                             icon_url="http://musicfamily.org/realm/Factions/picks/RealmGrinderGameRL.png") \
                 .set_thumbnail(url=challengeEmbed[0]) \
@@ -153,7 +147,7 @@ class Notawiki(commands.Cog):
                     'This challenge reward is disabled for a bit due to the embed being too large. See: http://musicfamily.org/realm/Challenges/')
 
             # Ignore the first 4 fields and create the rest
-            for line in challengeEmbed[ignore:]:
+            for line in challengeEmbed[2:]:
                 newline = line.split(": ")
                 embed.add_field(name=f'**{newline[0]}**', value=newline[1], inline=False)
 
@@ -214,7 +208,7 @@ class Notawiki(commands.Cog):
                 alias["lineage"]) + "\n\nRetrieves the " \
                                     "Lineage info from Not-a-Wiki in an embed displaying name, cost, formula, and effect. Also includes challenges." \
                                     "\n\nAcceptable inputs include full or shortened faction names, plus the number of perk (can be left empty to get base effect)." \
-                                    "\n\nExample: .lineage Fairy, .line Dwarf 4"
+                                    "\n\nExample: .lineage Fairy, .line Dwarf 4, .l ARP5"
             emoji = discord.utils.get(ctx.guild.emojis, name="SuggestionMaster")
             embed = discord.Embed(title=f"{emoji}  Research", description=description, colour=self.color)
             return await ctx.send(embed=embed)
@@ -225,6 +219,13 @@ class Notawiki(commands.Cog):
             faction = FactionUpgrades.getFactionNameFull(faction)
             if not faction:
                 raise Exception('Invalid Input')
+        elif len(faction) == 4 and faction[2].lower() == 'p':
+            number = faction[3]
+            faction = faction[0:2].upper()
+            colour = FactionUpgrades.getFactionColour(faction)
+            faction = FactionUpgrades.getFactionNameFull(faction)
+            if not faction:
+                raise Exception ('Invalid Input')
         else:
             faction = faction.lower()
             faction = faction.capitalize()
@@ -307,7 +308,9 @@ class Notawiki(commands.Cog):
 
                 embed = discord.Embed(title=title, description=description, colour=colour) \
                     .set_thumbnail(url=image) \
-                    .set_author(name=author, icon_url=author.avatar_url)
+                    .set_author(name=author, icon_url=author.avatar_url) \
+                    .set_footer(text="http://musicfamily.org/realm/Artifacts/",
+                                icon_url="http://musicfamily.org/realm/Factions/picks/RealmGrinderGameRL.png")
 
                 for line in artifactEmbed[2:]:
                     try:
@@ -346,6 +349,7 @@ class Notawiki(commands.Cog):
             faction = faction.capitalize()
             if faction == "Dwarven":
                 color = FactionUpgrades.getFactionColour("Dwarf")
+                faction = "Dwarf"
             elif faction == "Elven":
                 color = FactionUpgrades.getFactionColour("Elf")
             else:
@@ -353,8 +357,6 @@ class Notawiki(commands.Cog):
 
         if faction in ["EL", "Elf"]:
             faction = "Elven"
-        if faction == "Dwarven":
-            faction = "Dwarf"
 
         async with ctx.channel.typing():
             bloodlineEmbed = NaWSearch.bloodline(faction)
@@ -375,11 +377,79 @@ class Notawiki(commands.Cog):
 
         await ctx.send(embed=embed)
 
+    @commands.command(aliases=alias["set"])
+    async def set(self, ctx: commands.Context, faction=None):
+        if faction in ['help', 'Help'] or faction == None:
+            emoji = discord.utils.get(ctx.guild.emojis, name="SuggestionMaster")
+            description = "**.set <faction>**\n**Aliases: **" + ', '.join(alias["set"]) + \
+                          "\n\nRetrieves the Artifact Set info from the wiki. " \
+                          "<faction> inputs can be using two-letter Mercenary Template, or the full Faction name. " \
+                          "\n\nExamples: .set Merc, .s UD "
+            embed = discord.Embed(title=f"{emoji} Artifact Set", description=description, colour=self.color)
+            return await ctx.send(embed=embed)
+
+        if len(faction) == 2:
+            faction = faction.upper()
+            faction = FactionUpgrades.getFactionNameFull(faction)
+            if faction is None:
+                raise Exception("Invalid Input")
+            color = FactionUpgrades.getFactionColour(faction)
+        else:
+            faction = faction.lower()
+            faction = faction.capitalize()
+            if faction == "Elf":
+                faction = "Elven"
+                color = FactionUpgrades.getFactionColour("Elf")
+            elif faction == "Dwarf":
+                faction = "Dwarven"
+                color = FactionUpgrades.getFactionColour("Dwarf")
+            elif faction == "Merc":
+                faction = "Mercenary"
+                color = FactionUpgrades.getFactionColour("Mercenary")
+            else:
+                color = FactionUpgrades.getFactionColour(faction)
+
+        async with ctx.channel.typing():
+            setEmbed = NaWSearch.artifactSet(faction)
+            author: discord.Member = ctx.message.author
+
+            embed = discord.Embed(title=setEmbed[1], colour=discord.Colour(color)) \
+                .set_footer(text="http://musicfamily.org/realm/ArtifactSet/",
+                            icon_url="http://musicfamily.org/realm/Factions/picks/RealmGrinderGameRL.png") \
+                .set_author(name=author, icon_url=author.avatar_url) \
+                .set_thumbnail(url=setEmbed[0])
+
+            for line in setEmbed[2:]:
+                try:
+                    line = line.split(": ")
+                    embed.add_field(name=f'**{line[0]}**', value=line[1], inline=False)
+                except Exception as e:
+                    print(e)
+
+        await ctx.send(embed=embed)
+
+    """
+    @upgrade.error
+    async def upgrade_error(self, ctx, error):
+        print("yes")
+        print(error)
+        if isinstance(error, Exception):
+            title = ":exclamation: Can't find that upgrade!"
+            description = str(error).split("Command raised an exception: Exception: ")[1]
+            print(error)
+            print("Sent by: " + str(ctx.message.author) + "\nMessage: " + str(ctx.message.content) + "\nDate: " + str(
+                datetime.datetime.utcnow()))
+            print("-----------")
+            embed = discord.Embed(title=title, description=description, colour=discord.Colour.red())
+            await ctx.send(embed=embed)
+    """
+    @upgrade.error
     @challenge.error
     @research.error
     @lineage.error
     @artifact.error
     @bloodline.error
+    @set.error
     async def universal_error(self, ctx, error):
         if isinstance(error, Exception):
             title = " :exclamation:  Command Error!"

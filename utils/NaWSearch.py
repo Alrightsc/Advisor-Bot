@@ -7,56 +7,21 @@ import datetime
 import requests
 
 badSubstrings = ["", "Cost", 'Effect', "Formula", "Mercenary Template", "Requirement", "Gem Grinder and Dragon's "
-                "Breath Formula", 'Formula: ', 'Requirements', 'Challenge', 'Note', 'Effect', 'Tier 4 Formula', 'Tier 7 Formula', 'A3+ Formula', 'A3+ Effect']
+                "Breath Formula", 'Formula: ', 'Requirements', 'Challenge', 'Note', 'Effect', 'Tier 4 Formula',
+                 'Tier 7 Formula', 'A3+ Formula', 'A3+ Effect', 'Formula', 'Ascension Penalty Reduction Formula',
+                 'Production Formula', 'Additive Formula', 'Multiplicative Formula']
 
-
-def Embedformat(lst: list, factionUpgrade=None):
-    """Formats the list retrieved from BeautifulSoup"""
-
-    # First line always return an url - we want to get the URL only for the thumbnail
-    url = lst[0]
-    extractor = URLExtract()
-    newUrl = extractor.find_urls(url)
-    lst[0] = newUrl[0]
-
-    # We add the faction upgrade name to the list so embed can refer to this
-    if factionUpgrade is not None:
-        lst.insert(1, factionUpgrade)
-
-    # For 10-12 upgrades, we want Cost to be first after Requirement, to look nice in Embed
-    if lst[3].startswith('Requirement'):
-        old = lst[3]
-        new = lst[4]
-        lst[3] = new
-        lst[4] = old
-
-    # Cleanup in case bad stuff goes through somehow
-    for line in lst[3:]:
+def stringCleaner(embed: list):
+    for line in embed:
         if line in badSubstrings:
-            lst.remove(line)
+            embed.remove(line)
 
-        # Notes are not really important for the embed
-        if line.startswith("Note") or line.startswith("Tip"):
-            lst.remove(line)
+    return embed
 
-    # A little extra for Djinn 8 - show current UTC time and odd/even day
-    if factionUpgrade == "Flashy Storm":
-        utc_dt = datetime.datetime.utcnow()
-        day = int(utc_dt.strftime("%d"))
-        dj8 = ""
-        if day % 2 == 0:
-            dj8 = ", Odd-tier Day"
-        elif day % 2 == 1:
-            dj8 = ", Even-tier Day"
-
-        lst.append(f'Current Time (UTC): {utc_dt.strftime("%H:%M")}' + dj8)
-
-    # A little less for the Druid Challenges reward - remove picture from lst
-    if factionUpgrade == "Primal Balance":
-        lst.remove(lst[5])
-
-    return lst
-
+def getImageUrl(line: str):
+    extractor = URLExtract()
+    url = extractor.find_urls(line)
+    return url[0]
 
 def factionUpgrade(faction):
     # Getting the Upgrade from FactionUpgrades
@@ -77,22 +42,32 @@ def factionUpgrade(faction):
     for tag in p:
         # space is necessary because there is always one after image
         if tag.get_text() == " " + factionUpgrade:
-            # if True, adds full line so we can retrieve the image through our formatting function
-            factionUpgradeEmbed.append(str(tag))
-
-            # Since we return true, we search using find_all_next function, and then break it there since we don't
-            # need to iterate anymore at the end
-            for line in tag.find_all_next(['p', 'br', 'hr', 'div']):
+            for line in tag.find_all_next():
                 # Not-a-Wiki stops lines after a break, a new line, or div, so we know the upgrade info stop there
-                if str(line) in ["<br/>", "<hr/>"] or str(line).startswith("<div"):
+                if str(line) in ["<br/>", "<hr/>", '<br/>'] or str(line).startswith("<div"):
                     break
                 else:
                     # Otherwise, add the lines of upgrade to the list - line.text returns the text without HTML tags
-                    factionUpgradeEmbed.append(line.text)
+                    factionUpgradeEmbed.append(str(line))
             break
 
-    # Then we run the list through a formatter, and that becomes our new list
-    return Embedformat(factionUpgradeEmbed, factionUpgrade)
+    # Cleaning up the tags
+    factionUpgradeEmbed = [re.sub("|<p>|<b>|</b>|\n|\t|</p>", "", s) for s in factionUpgradeEmbed]
+    factionUpgradeEmbed[0] = getImageUrl(factionUpgradeEmbed[0])
+    factionUpgradeEmbed[1] = factionUpgrade
+
+    if factionUpgrade == "Flashy Storm":
+        utc_dt = datetime.datetime.utcnow()
+        day = int(utc_dt.strftime("%d"))
+        dj8 = ""
+        if day % 2 == 0:
+            dj8 = ", Odd-tier Day"
+        elif day % 2 == 1:
+            dj8 = ", Even-tier Day"
+
+        factionUpgradeEmbed.append(f'Current Time (UTC): {utc_dt.strftime("%H:%M")}' + dj8)
+
+    return stringCleaner(factionUpgradeEmbed)
 
 
 def challenge(faction):
@@ -107,53 +82,50 @@ def challenge(faction):
     # Our upgrade info will be added here
     challengeEmbed = []
 
-    find = False
     # Iterating through p, finding until upgrade matches
     for tag in p:
         if faction in tag['href']:
-            temp = tag['research'].split("</p>")
+            challengeEmbed = tag['research'].split("</p>")
             # The following is to convert tag['research'] into a format that the format() function will work with
-            temp = [re.sub("<p>|<b>|</b>|\n|\t", "", s) for s in temp]
-            temp.insert(0, temp[1])
-            temp.remove(temp[2])
-            challengeEmbed = temp
-            find = True
+            break
 
-    if not find:
-        raise Exception("Invalid Input")
+    # CLeaning up the list
+    challengeEmbed = [re.sub("<p>|<b>|</b>|\n|\t", "", s) for s in challengeEmbed]
+    challengeEmbed[0] = challengeEmbed[0] + ": " + challengeEmbed[1].split("> ")[1]
+    challengeEmbed[1] = getImageUrl(challengeEmbed[1])
+    challengeEmbed[0], challengeEmbed[1] = challengeEmbed[1], challengeEmbed[0]
 
-    old = challengeEmbed[0]
-    new = challengeEmbed[1]
-    challengeEmbed[0] = new
-    challengeEmbed[1] = old
+    if faction[-1] == "R":
+        challengeEmbed[1] = challengeEmbed[1].split(": ")[1]
+    else:
+        challengeEmbed.remove(challengeEmbed[2])
 
-    # Then we run the list through a formatter, and that becomes our new list
-    challengeName = challengeEmbed[0].split("> ")
-    return Embedformat(challengeEmbed, challengeName[1])
+    if faction == "DruidDCR":
+        challengeEmbed.remove(challengeEmbed[4])
+
+    return stringCleaner(challengeEmbed)
 
 def research(research):
     # Yummy soup stuff
     nawLink = "http://musicfamily.org/realm/Researchtree/"
     content = requests.get(nawLink)
     soup = BeautifulSoup(content.content, 'html.parser')
-    find = False
 
     # Researches begin using area, so we get all of them directly here
     p = soup.find_all('area')
+    researchContents = []
 
     for tag in p:
         # Adding a space at the end avoids jumping checks like "S1" and "S10" for example due to startswith() function
-        if tag['research'].startswith(research + " "):
-            find = True
+        if tag['research'].startswith(research + " ") or tag['research'].startswith("<p><b>" + research):
             # Splitting into a list. We want it to look as below:
             # <shorthand>, <for Faction>, <research Name>, <Requirements (optional)>, <Cost>, <Effect>
-            researchContents = []
             for line in tag['research'].split("\n"):
                 line = line.strip('\n')
                 researchContents.append(line)
             break
 
-    if not find:
+    if not researchContents:
         raise Exception("Invalid Input")
 
     #special exception for these researches due to NaW's additive/multiplicative formulas
@@ -164,9 +136,6 @@ def research(research):
 
     # Bad strings are bad
     researchEmbed = [re.sub("|<p>|<b>|</b>|\n|\t|</p>", "", s) for s in researchContents]
-    for string in badSubstrings:
-        if string in researchEmbed:
-            researchEmbed.remove(string)
 
     # Splitting contents, switching around, prettifying embeds
     original = researchEmbed[0].split(' - ')
@@ -175,7 +144,7 @@ def research(research):
     researchName = researchEmbed[2].split(": ")
     researchEmbed[2] = researchName[1]
 
-    return researchEmbed
+    return stringCleaner(researchEmbed)
 
 
 def lineage(faction, perk):
@@ -194,9 +163,7 @@ def lineage(faction, perk):
     if perk is None:
         for tag in p:
             if tag.get_text() == f' {faction} Lineage':
-                extractor = URLExtract()
-                newUrl = extractor.find_urls(str(tag))
-                lineageEmbed.append(newUrl[0])
+                lineageEmbed.append(getImageUrl(str(tag)))
                 for line in tag.find_all_next():
                     if str(line) == '<br/>':
                         break
@@ -206,9 +173,7 @@ def lineage(faction, perk):
     else:
         for tag in p:
             if tag.get_text() == f' {faction} Perk {perk}':
-                extractor = URLExtract()
-                newUrl = extractor.find_urls(str(tag))
-                lineageEmbed.append(newUrl[0])
+                lineageEmbed.append(getImageUrl(str(tag)))
                 for line in tag.find_all_next():
                     if str(line) in ['<br/>', '<hr/>']:
                         break
@@ -219,18 +184,14 @@ def lineage(faction, perk):
     if not lineageEmbed:
         raise Exception("Invalid Input")
 
-    for badword in badSubstrings:
-        if badword in lineageEmbed:
-            lineageEmbed.remove(badword)
-
     lineageEmbed[1] = lineageEmbed[1].strip()
 
-    return lineageEmbed
+    return stringCleaner(lineageEmbed)
 
 def artifactSearch(artifact):
     artList = FactionUpgrades.fastArtifactSearch(artifact)
     if len(artList) != 1:
-        return FactionUpgrades.fastArtifactSearch(artifact), False
+        return artList, False
     else:
         artifact = artList[0]
 
@@ -243,7 +204,7 @@ def artifactSearch(artifact):
     p = soup.find_all('area')
 
     for tag in p:
-        if artifact in tag['research']:
+        if (artifact + "</b>") in tag['research']:
             artifactContents = tag['research'].split("\n")
             break
 
@@ -251,16 +212,13 @@ def artifactSearch(artifact):
     for line in artifactContents:
         artifactEmbed.append(line.strip())
 
-    extractor = URLExtract()
-    newUrl = extractor.find_urls(artifactEmbed[0])
-    artifactEmbed.insert(0, newUrl[0])
+    artifactEmbed.insert(0, getImageUrl(artifactEmbed[0]))
     artifactEmbed[1] = artifactEmbed[1].split("> ")[1]
 
-    for line in artifactEmbed:
-        if line in badSubstrings:
-            artifactEmbed.remove(line)
+    if artifact in ['Duskstone', 'Dawnstone']:
+        artifactEmbed.remove(artifactEmbed[-1])
 
-    return artifactEmbed, True
+    return stringCleaner(artifactEmbed), True
 
 def bloodline(bloodline):
     nawLink = "http://musicfamily.org/realm/Bloodline/"
@@ -278,13 +236,24 @@ def bloodline(bloodline):
             bloodlineContents.append(tag.get_text())
 
     bloodlineEmbed = [re.sub("|<p>|<b>|</b>|\n|\t|</p>", "", s) for s in bloodlineContents]
+    bloodlineEmbed[0] = getImageUrl(bloodlineEmbed[0])
 
-    extractor = URLExtract()
-    newUrl = extractor.find_urls(bloodlineEmbed[0])
-    bloodlineEmbed[0] = newUrl[0]
+    return stringCleaner(bloodlineEmbed)
 
-    for line in bloodlineEmbed:
-        if line in badSubstrings:
-            bloodlineEmbed.remove(line)
+def artifactSet(faction):
+    nawLink = "http://musicfamily.org/realm/ArtifactSet/"
+    content = requests.get(nawLink)
+    soup = BeautifulSoup(content.content, 'html.parser')
 
-    return bloodlineEmbed
+    setContents = []
+    p = soup.find_all('area')
+
+    for tag in p:
+        if "#" + faction in tag['href']:
+            setContents = tag['research'].split("</p>")
+
+    setContents = [re.sub("|<p>|<b>|</b>|\n|\t|</p>", "", s) for s in setContents]
+    setContents[0] = getImageUrl(setContents[0])
+    setContents.insert(1, faction + " Set")
+
+    return stringCleaner(setContents)
